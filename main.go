@@ -7,16 +7,21 @@ import (
 	"io"
 	"os"
 	"strings"
-	//"sync"
+	"sync"
 	"time"
 )
 
 var quietMode bool
 var out io.Writer = os.Stdout
 
+// FlipperRule is a struct that we populate to handle a set of rules to perform against the file name. Allows easy 'modular' rules to be added without affecting codebase
+type FlipperRule struct {
+	Name 	string
+	Actions map[string]string
+	OneShot bool
+}
+
 func main() {
-	var outputFileFlag string
-	flag.StringVar(&outputFileFlag, "o", "", "Output a list of the identified IP addresses with their URL and the provider (if identified)")
 	quietModeFlag := flag.Bool("q", false, "Only output the data we care about")
 	flag.Parse()
 
@@ -28,16 +33,16 @@ func main() {
 	}
 
 	writer := bufio.NewWriter(out)
-	targetDomains := make(chan string, 1)
-	// var wg sync.WaitGroup
+	loadedFileNames := make(chan string, 1)
+	var wg sync.WaitGroup
 
 	ch := readStdin()
 	go func() {
 		//translate stdin channel to domains channel
-		for u := range ch {
-			targetDomains <- u
+		for fn := range ch {
+			loadedFileNames <- fn
 		}
-		close(targetDomains)
+		close(loadedFileNames)
 	}()
 
 	// flush to writer periodically
@@ -51,8 +56,47 @@ func main() {
 			}
 		}
 	}()
+
+	// create the rules here
+	d2u := &FlipperRule {
+		Name: "Dash 2 Underscore",
+		Actions: map[string]string {
+			"-": "_",
+		},
+	}
+
+	u2d := &FlipperRule {
+		Name: "Underscore 2 Dash",
+		Actions: map[string]string {
+			"_": "-",
+		},
+	}
+
+	// populate and store them for looped usage
+	rules := []*FlipperRule{d2u, u2d}
+	fmt.Println("[*] Rules Loaded:", len(rules))
+
+	for lfn := range loadedFileNames {
+		wg.Add(1)
+		go func(loadedName string) {
+			defer wg.Done()
+			if !quietMode {
+				fmt.Println("Mutating:", loadedName)
+			}
+
+			// loop the rules here
+			
+
+		}(lfn)
+	}
 }
 
+// tool specific functionality
+func followRule(rule *FlipperRule) {
+
+}
+
+// util, generic tool stuff
 func banner() {
 	fmt.Println("---------------------------------------------------")
 	fmt.Println("Flipper -> Crawl3r")
