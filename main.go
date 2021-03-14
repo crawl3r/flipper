@@ -7,8 +7,6 @@ import (
 	"io"
 	"os"
 	"strings"
-	"sync"
-	"time"
 )
 
 var quietMode bool
@@ -32,9 +30,7 @@ func main() {
 		fmt.Println("")
 	}
 
-	writer := bufio.NewWriter(out)
 	loadedFileNames := make(chan string, 1)
-	var wg sync.WaitGroup
 
 	ch := readStdin()
 	go func() {
@@ -45,24 +41,13 @@ func main() {
 		close(loadedFileNames)
 	}()
 
-	// flush to writer periodically
-	t := time.NewTicker(time.Millisecond * 500)
-	defer t.Stop()
-	go func() {
-		for {
-			select {
-			case <-t.C:
-				writer.Flush()
-			}
-		}
-	}()
-
 	// create the rules here
 	d2u := &FlipperRule {
 		Name: "Dash 2 Underscore",
 		Actions: map[string]string {
 			"-": "_",
 		},
+		OneShot: true,
 	}
 
 	u2d := &FlipperRule {
@@ -70,6 +55,7 @@ func main() {
 		Actions: map[string]string {
 			"_": "-",
 		},
+		OneShot: true,
 	}
 
 	// populate and store them for looped usage
@@ -77,23 +63,29 @@ func main() {
 	fmt.Println("[*] Rules Loaded:", len(rules))
 
 	for lfn := range loadedFileNames {
-		wg.Add(1)
-		go func(loadedName string) {
-			defer wg.Done()
-			if !quietMode {
-				fmt.Println("Mutating:", loadedName)
-			}
+		if !quietMode {
+			fmt.Println("Mutating:", lfn)
+		}
 
-			// loop the rules here
-			
-
-		}(lfn)
+		// loop the rules here
+		for _, r := range rules {
+			followRule(lfn, r)
+		}
 	}
 }
 
 // tool specific functionality
-func followRule(rule *FlipperRule) {
-
+func followRule(loadedFileName string, rule *FlipperRule) {
+	// are we a oneshot rule, if so, we do all of it at once
+	if rule.OneShot {
+		newVal := loadedFileName
+		for k, v := range rule.Actions {
+			newVal = strings.Replace(newVal, k, v, -1)
+		}
+		fmt.Println("o:", loadedFileName, "n:", newVal)
+	} else {
+		// if not, we want to loop the rules map and apply each one, one at a time
+	}
 }
 
 // util, generic tool stuff
@@ -112,14 +104,7 @@ func readStdin() <-chan string {
 		defer close(lines)
 		sc := bufio.NewScanner(os.Stdin)
 		for sc.Scan() {
-			url := strings.ToLower(sc.Text())
-			if url != "" {
-				// strip the http:// or https:// here other the IP look up fails
-				// Note: we don't care for multiple entries of the same URL
-				final := strings.Replace(url, "http://", "", -1)
-				final = strings.Replace(final, "https://", "", -1)
-				lines <- final
-			}
+			lines <- sc.Text()
 		}
 	}()
 	return lines
