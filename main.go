@@ -101,7 +101,10 @@ func followRule(loadedFileName string, rule *FlipperRule) {
 		for k, v := range rule.Actions {
 			newVal = strings.Replace(newVal, k, v, -1)
 		}
-		fmt.Println(newVal)
+
+		if newVal != loadedFileName {
+			fmt.Println(newVal)
+		}
 	} else {
 		// if not, we want to loop the rules map and apply each one, one at a time
 		
@@ -115,14 +118,6 @@ func followRule(loadedFileName string, rule *FlipperRule) {
 				foundChars = append(foundChars, string(c))
 			} 
 		}
-
-		fmt.Println("Found chars:", loadedFileName, "->", foundChars)
-
-		// 1st pass, single letter replacement (all letters for now)
-		//for _, c := range foundChars {
-		//	singlePass1LetterVal := strings.Replace(loadedFileName, c, rule.Actions[c], -1)
-		//	fmt.Println(singlePass1LetterVal)
-		//}
 
 		// recursively loop through the 'found' chars for every possible combination.
 		// use every combination and then generate the new words with these replacement combinations
@@ -195,4 +190,12 @@ func stringContainsChar(str string, char rune) bool {
 		}
 	}
 	return false
+}
+
+func generateStringOfLength(c rune, l int) string {
+	final := ""
+	for i := 0; i < l; i++ {
+		final += string(c)
+	}
+	return final
 }
