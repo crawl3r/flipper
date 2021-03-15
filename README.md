@@ -5,7 +5,7 @@ Flipper was designed for personal usage to take a list of potential web server f
 Techniques:  
 * dashes to underscores
 * underscores to dashes
-* '1337' speak (letters to numbers)
+* '1337' speak (letters to numbers) [not fully working]
   
 ## Installation  
   
