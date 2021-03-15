@@ -116,37 +116,39 @@ func followRule(loadedFileName string, rule *FlipperRule) {
 			} 
 		}
 
+		fmt.Println("Found chars:", loadedFileName, "->", foundChars)
+
 		// 1st pass, single letter replacement (all letters for now)
-		for _, c := range foundChars {
-			singlePass1LetterVal := strings.Replace(loadedFileName, c, rule.Actions[c], -1)
-			fmt.Println(singlePass1LetterVal)
-		}
+		//for _, c := range foundChars {
+		//	singlePass1LetterVal := strings.Replace(loadedFileName, c, rule.Actions[c], -1)
+		//	fmt.Println(singlePass1LetterVal)
+		//}
 
 		// recursively loop through the 'found' chars for every possible combination.
 		// use every combination and then generate the new words with these replacement combinations
-		getCombinations("", foundChars)
+		getCombinationsRecursive("", foundChars)
 		fmt.Println("-------------------------------")
 		fmt.Println(currentCombinations)
 		fmt.Println("-------------------------------")
 
-		// full pass, fully 1337 word
-		fullPassVal := loadedFileName
-		for _, c := range foundChars {
-			fullPassVal = strings.Replace(fullPassVal, c, rule.Actions[c], -1)
+		// using all our combinations, 1337 the words relative to current
+		for _, combo := range currentCombinations {
+			currComboVal := loadedFileName
+			
+			for _, c := range combo {
+				// need better logic here to only replace the next one found?
+				currComboVal = strings.Replace(currComboVal, string(c), rule.Actions[string(c)], 1)
+			}
+			fmt.Println(currComboVal)
 		}
-		fmt.Println(fullPassVal)
 	}
-}
-
-func getCombinations(current string, chars []string) {
-	getCombinationsRecursive(current, chars)
 }
 
 func getCombinationsRecursive(current string, chars []string) {
 	for idx, c := range chars {
 
-		if !existsInArray(currentCombinations, c) {
-			currentCombinations = append(currentCombinations, c)
+		if !existsInArray(currentCombinations, current + c) {
+			currentCombinations = append(currentCombinations, current + c)
 		}
 
 		if (idx + 1) < len(chars) {
@@ -180,6 +182,15 @@ func readStdin() <-chan string {
 func existsInArray(arr []string, s string) bool {
 	for _, curr := range arr {
 		if curr == s {
+			return true
+		}
+	}
+	return false
+}
+
+func stringContainsChar(str string, char rune) bool {
+	for _, c := range str {
+		if c == char {
 			return true
 		}
 	}
