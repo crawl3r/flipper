@@ -84,6 +84,10 @@ anoth3r_fil3
 another_fi1e
 anoth3r_fi1e 
 ```
+
+## Known Bug  
+  
+1337 rule seems okay if the target word only has one instance of the replaceable letter. I haven't perfected the recursive replace to account for multiple of the same letters, ensuring all patterns are generated.  
   
 ## License  
   
